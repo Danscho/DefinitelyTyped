@@ -1,5 +1,5 @@
-// Type definitions for Jasmine 3.3
-// Project: https://jasmine.github.io/
+// Type definitions for Jasmine 3.4
+// Project: http://jasmine.github.io
 // Definitions by: Boris Yankov <https://github.com/borisyankov>
 //                 Theodore Brown <https://github.com/theodorejb>
 //                 David Pärsson <https://github.com/davidparsson>
@@ -11,9 +11,14 @@
 //                 Yaroslav Admin <https://github.com/devoto13>
 //                 Domas Trijonis <https://github.com/fdim>
 //                 Peter Safranek <https://github.com/pe8ter>
+//                 Moshe Kolodny <https://github.com/kolodny>
+//                 Stephen Farrar <https://github.com/stephenfarrar>
+//                 Mochamad Arfin <https://github.com/ndunks>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.8
 // For ddescribe / iit use : https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/karma-jasmine/karma-jasmine.d.ts
+
+type ImplementationCallback = (() => PromiseLike<any>) | (() => void) | ((done: DoneFn) => void);
 
 /**
  * Create a group of specs (often called a suite).
@@ -43,7 +48,7 @@ declare function xdescribe(description: string, specDefinitions: () => void): vo
  * @param assertion Function that contains the code of your test. If not provided the test will be pending.
  * @param timeout Custom timeout for an async spec.
  */
-declare function it(expectation: string, assertion?: (done: DoneFn) => void, timeout?: number): void;
+declare function it(expectation: string, assertion?: ImplementationCallback, timeout?: number): void;
 
 /**
  * A focused `it`. If suites or specs are focused, only those that are focused will be executed.
@@ -51,7 +56,7 @@ declare function it(expectation: string, assertion?: (done: DoneFn) => void, tim
  * @param assertion Function that contains the code of your test. If not provided the test will be pending.
  * @param timeout Custom timeout for an async spec.
  */
-declare function fit(expectation: string, assertion?: (done: DoneFn) => void, timeout?: number): void;
+declare function fit(expectation: string, assertion?: ImplementationCallback, timeout?: number): void;
 
 /**
  * A temporarily disabled `it`. The spec will report as pending and will not be executed.
@@ -59,7 +64,7 @@ declare function fit(expectation: string, assertion?: (done: DoneFn) => void, ti
  * @param assertion Function that contains the code of your test. If not provided the test will be pending.
  * @param timeout Custom timeout for an async spec.
  */
-declare function xit(expectation: string, assertion?: (done: DoneFn) => void, timeout?: number): void;
+declare function xit(expectation: string, assertion?: ImplementationCallback, timeout?: number): void;
 
 /**
  * Mark a spec as pending, expectation results will be ignored.
@@ -73,14 +78,14 @@ declare function pending(reason?: string): void;
  * @param action Function that contains the code to setup your specs.
  * @param timeout Custom timeout for an async beforeEach.
  */
-declare function beforeEach(action: (done: DoneFn) => void, timeout?: number): void;
+declare function beforeEach(action: ImplementationCallback, timeout?: number): void;
 
 /**
  * Run some shared teardown after each of the specs in the describe in which it is called.
  * @param action Function that contains the code to teardown your specs.
  * @param timeout Custom timeout for an async afterEach.
  */
-declare function afterEach(action: (done: DoneFn) => void, timeout?: number): void;
+declare function afterEach(action: ImplementationCallback, timeout?: number): void;
 
 /**
  * Run some shared setup once before all of the specs in the describe are run.
@@ -88,7 +93,7 @@ declare function afterEach(action: (done: DoneFn) => void, timeout?: number): vo
  * @param action Function that contains the code to setup your specs.
  * @param timeout Custom timeout for an async beforeAll.
  */
-declare function beforeAll(action: (done: DoneFn) => void, timeout?: number): void;
+declare function beforeAll(action: ImplementationCallback, timeout?: number): void;
 
 /**
  * Run some shared teardown once before all of the specs in the describe are run.
@@ -96,7 +101,7 @@ declare function beforeAll(action: (done: DoneFn) => void, timeout?: number): vo
  * @param action Function that contains the code to teardown your specs.
  * @param timeout Custom timeout for an async afterAll
  */
-declare function afterAll(action: (done: DoneFn) => void, timeout?: number): void;
+declare function afterAll(action: ImplementationCallback, timeout?: number): void;
 
 /**
  * Create an expectation for a spec.
@@ -132,7 +137,7 @@ declare function expect(): jasmine.NothingMatcher;
  * @checkReturnValue see https://tsetse.info/check-return-value
  * @param actual - Actual computed value to test expectations against.
  */
-declare function expectAsync<T, U>(actual: Promise<T>): jasmine.AsyncMatchers<T, U>;
+declare function expectAsync<T, U>(actual: PromiseLike<T>): jasmine.AsyncMatchers<T, U>;
 
 /**
  * Explicitly mark a spec as failed.
@@ -176,7 +181,12 @@ declare function waitsFor(latchMethod: () => boolean, failureMessage?: string, t
 declare function waits(timeout?: number): void;
 
 declare namespace jasmine {
-    type Expected<T> = T | ObjectContaining<T> | Any | Spy;
+    type ExpectedRecursive<T> = T | ObjectContaining<T> | AsymmetricMatcher | {
+        [K in keyof T]: ExpectedRecursive<T[K]> | Any;
+    };
+    type Expected<T> = T | ObjectContaining<T> | AsymmetricMatcher | Any | Spy | {
+        [K in keyof T]: ExpectedRecursive<T[K]>;
+    };
     type SpyObjMethodNames<T = undefined> =
         T extends undefined ?
             (ReadonlyArray<string> | {[methodName: string]: any}) :
@@ -189,6 +199,30 @@ declare namespace jasmine {
     function any(aclass: any): Any;
 
     function anything(): Any;
+
+    /**
+     * That will succeed if the actual value being compared is `true` or anything truthy.
+     * @since 3.1.0
+     */
+    function truthy(): Truthy;
+
+    /**
+     * That will succeed if the actual value being compared is  `null`, `undefined`, `0`, `false` or anything falsey.
+     * @since 3.1.0
+     */
+    function falsy(): Falsy;
+
+    /**
+     * That will succeed if the actual value being compared is empty.
+     * @since 3.1.0
+     */
+    function empty(): Empty;
+
+    /**
+     * That will succeed if the actual value being compared is not empty.
+     * @since 3.1.0
+     */
+    function notEmpty(): NotEmpty;
 
     function arrayContaining<T>(sample: ArrayLike<T>): ArrayContaining<T>;
     function arrayWithExactContents<T>(sample: ArrayLike<T>): ArrayContaining<T>;
@@ -221,24 +255,31 @@ declare namespace jasmine {
         jasmineToString(): string;
     }
 
+    interface AsymmetricMatcher<T extends string = string> {
+        asymmetricMatch(other: any): boolean;
+        jasmineToString?(): T;
+      }
+
+    interface Truthy extends AsymmetricMatcher<'<jasmine.truthy>'> { }
+    interface Falsy extends AsymmetricMatcher<'<jasmine.falsy>'> { }
+    interface Empty extends AsymmetricMatcher<'<jasmine.empty>'> { }
+    interface NotEmpty extends AsymmetricMatcher<'<jasmine.notEmpty>'> { }
+
     // taken from TypeScript lib.core.es6.d.ts, applicable to CustomMatchers.contains()
     interface ArrayLike<T> {
         length: number;
         [n: number]: T;
     }
 
-    interface ArrayContaining<T> {
-        new (sample: ArrayLike<T>): ArrayLike<T>;
-
-        asymmetricMatch(other: any): boolean;
-        jasmineToString(): string;
+    interface ArrayContaining<T> extends AsymmetricMatcher {
+        new?(sample: ArrayLike<T>): ArrayLike<T>;
     }
 
     interface ObjectContaining<T> {
-        new (sample: Partial<T>): Partial<T>;
+        new?(sample: {[K in keyof T]?: any}): {[K in keyof T]?: any};
 
         jasmineMatches(other: any, mismatchKeys: any[], mismatchValues: any[]): boolean;
-        jasmineToString(): string;
+        jasmineToString?(): string;
     }
 
     interface Block {
@@ -302,11 +343,11 @@ declare namespace jasmine {
         execute(): void;
         describe(description: string, specDefinitions: () => void): Suite;
         // ddescribe(description: string, specDefinitions: () => void): Suite; Not a part of jasmine. Angular team adds these
-        beforeEach(beforeEachFunction: (done: DoneFn) => void, timeout?: number): void;
-        beforeAll(beforeAllFunction: (done: DoneFn) => void, timeout?: number): void;
+        beforeEach(beforeEachFunction: ImplementationCallback, timeout?: number): void;
+        beforeAll(beforeAllFunction: ImplementationCallback, timeout?: number): void;
         currentRunner(): Runner;
-        afterEach(afterEachFunction: (done: DoneFn) => void, timeout?: number): void;
-        afterAll(afterAllFunction: (done: DoneFn) => void, timeout?: number): void;
+        afterEach(afterEachFunction: ImplementationCallback, timeout?: number): void;
+        afterAll(afterAllFunction: ImplementationCallback, timeout?: number): void;
         xdescribe(desc: string, specDefinitions: () => void): XSuite;
         it(description: string, func: () => void): Spec;
         // iit(description: string, func: () => void): Spec; Not a part of jasmine. Angular team adds these
@@ -515,25 +556,25 @@ declare namespace jasmine {
          * Expect a promise to be resolved.
          * @param expectationFailOutput
          */
-        toBeResolved(expectationFailOutput?: any): Promise<void>;
+        toBeResolved(expectationFailOutput?: any): PromiseLike<void>;
 
         /**
          * Expect a promise to be rejected.
          * @param expectationFailOutput
          */
-        toBeRejected(expectationFailOutput?: any): Promise<void>;
+        toBeRejected(expectationFailOutput?: any): PromiseLike<void>;
 
         /**
          * Expect a promise to be resolved to a value equal to the expected, using deep equality comparison.
          * @param expected - Value that the promise is expected to resolve to.
          */
-        toBeResolvedTo(expected: Expected<T>): Promise<void>;
+        toBeResolvedTo(expected: Expected<T>): PromiseLike<void>;
 
         /**
          * Expect a promise to be rejected with a value equal to the expected, using deep equality comparison.
          * @param expected - Value that the promise is expected to be rejected with.
          */
-        toBeRejectedWith(expected: Expected<U>): Promise<void>;
+        toBeRejectedWith(expected: Expected<U>): PromiseLike<void>;
 
         /**
          * Add some context for an expect.

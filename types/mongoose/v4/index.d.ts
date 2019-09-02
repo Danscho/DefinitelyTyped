@@ -1,11 +1,11 @@
-// Type definitions for Mongoose 4.7.2
+// Type definitions for Mongoose 4.7.3
 // Project: http://mongoosejs.com/
 // Definitions by: simonxca <https://github.com/simonxca>
 //                 horiuchi <https://github.com/horiuchi>
 //                 lukasz-zak <https://github.com/lukasz-zak>
-//                 Emmanuel Gautier <https://github.com/emmanuelgautier>
+//                 murbanowicz <https://github.com/murbanowicz>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.3
+// TypeScript Version: 2.8
 
 /// <reference types="mongodb" />
 /// <reference types="node" />
@@ -1681,7 +1681,7 @@ declare module "mongoose" {
      * getters/setters or other Mongoose magic applied.
      * @param bool defaults to true
      */
-    lean(bool?: boolean): Query<object>;
+    lean(bool?: boolean | object): Query<object>;
 
     /** Specifies the maximum number of documents the query will return. Cannot be used with distinct() */
     limit(val: number): this;
@@ -2446,7 +2446,7 @@ declare module "mongoose" {
      *   Model#ensureIndexes. If an error occurred it is passed with the event.
      *   The fields, options, and index name are also passed.
      */
-    new(doc?: any): T;
+    new(doc?: Partial<T>): T;
 
     /**
      * Finds a single document by its _id field. findById(id) is almost*
@@ -2461,7 +2461,7 @@ declare module "mongoose" {
     findById(id: any | string | number, projection: any, options: any,
       callback?: (err: any, res: T | null) => void): DocumentQuery<T | null, T>;
 
-    model(name: string): Model<T>;
+      model<U extends Document>(name: string): Model<U>;
 
     /**
      * Creates a Query and specifies a $where condition.
@@ -2501,29 +2501,6 @@ declare module "mongoose" {
     distinct(field: string, callback?: (err: any, res: any[]) => void): Query<any[]>;
     distinct(field: string, conditions: any,
       callback?: (err: any, res: any[]) => void): Query<any[]>;
-
-    /**
-     * Makes the indexes in MongoDB match the indexes defined in this model's
-     * schema. This function will drop any indexes that are not defined in
-     * the model's schema except the `_id` index, and build any indexes that
-     * are in your schema but not in MongoDB.
-     * @param options options to pass to `ensureIndexes()`
-     * @param callback optional callback
-     * @return Returns `undefined` if callback is specified, returns a promise if no callback.
-     */
-    syncIndexes(options: object, callback?: (err: any) => void): void;
-    syncIndexes(options: object): Promise<void>;
-
-    /**
-     * Lists the indexes currently defined in MongoDB. This may or may not be
-     * the same as the indexes defined in your schema depending on whether you
-     * use the [`autoIndex` option](/docs/guide.html#autoIndex) and if you
-     * build indexes manually.
-     * @param cb optional callback
-     * @return Returns `undefined` if callback is specified, returns a promise if no callback.
-     */
-    listIndexes(callback: (err: any) => void): void;
-    listIndexes(): Promise<void>;
 
     /**
      * Sends ensureIndex commands to mongo for each index declared in the schema.
@@ -2731,7 +2708,7 @@ declare module "mongoose" {
      * Returns another Model instance.
      * @param name model name
      */
-    model(name: string): Model<this>;
+    model<T extends Document>(name: string): Model<T>;
 
     /**
      * Removes this document from the db.

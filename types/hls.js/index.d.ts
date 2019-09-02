@@ -2,6 +2,8 @@
 // Project: https://github.com/video-dev/hls.js
 // Definitions by: John G. Gainfort, Jr. <https://github.com/jgainfort>
 //                 Johan Brook <https://github.com/brookback>
+//                 Adrián Caballero <https://github.com/adripanico>
+//                 Alexey I. Berezin <https://github.com/beraliv>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.4
 
@@ -189,33 +191,65 @@ declare namespace Hls {
      */
     interface Level {
         /**
-         * level url. might contain sever items if failover/redundant streams are found in the manifest
+         * attribute list
          */
-        url: string[];
+        attrs: LevelAttr[];
+        /**
+         * audio codec
+         */
+        audioCodec: string;
         /**
          * level bitrate
          */
         bitrate: number;
         /**
-         * level name
+         * level details
          */
-        name: string;
+        details?: LevelDetails;
         /**
-         * used codecs
+         * whether there is any error on the fragment
          */
-        codecs: string;
-        /**
-         * video width
-         */
-        width: number;
+        fragmentError?: boolean;
         /**
          * video height
          */
         height: number;
         /**
-         * level details
+         * index of the level
          */
-        details: LevelDetails;
+        level?: number;
+        /**
+         * error code
+         */
+        loadError: number;
+        /**
+         * level name
+         */
+        name: string;
+        /**
+         * array of unrecognized codecs
+         */
+        unkownCodecs: string[];
+        /**
+         * level url. might contain several items if failover/redundant streams are found in the manifest
+         */
+        url: string[];
+        /**
+         * index of current url from url[] array
+         */
+        urlId: number;
+        /**
+         * video codec
+         */
+        videoCodec: string;
+        /**
+         * video width
+         */
+        width: number;
+    }
+
+    interface LevelAttr {
+        [key: string]: string;
     }
 
     /**
@@ -1607,7 +1641,7 @@ declare class Hls {
     /**
      * return array of available quality levels
      */
-    levels: Hls.Level[];
+    readonly levels: Hls.Level[];
     /**
      * get: return current playback quality level
      * set:  trigger an immediate quality level switch to new quality level
@@ -1633,15 +1667,9 @@ declare class Hls {
      */
     startLevel: number;
     /**
-     * (default: true)
-     * if set to true, start level playlist and first fragments will be loaded automatically, after triggering of Hls.Events.MANIFEST_PARSED event
-     * if set to false, an explicit API call (hls.startLoad(startPosition=-1)) will be needed to start quality level/fragment loading.
-     */
-    autoStartLoad: boolean;
-    /**
      * get: Return the bound videoElement from the hls instance
      */
-    media: HTMLVideoElement;
+    readonly media?: HTMLVideoElement | null;
     /**
      *  hls.js config
      */
@@ -1675,7 +1703,7 @@ declare class Hls {
     /**
      * array of audio tracks exposed in manifest
      */
-    audioTracks: AudioTrack[];
+    readonly audioTracks: AudioTrack[];
     /**
      * get: returns audio track id
      * set: sets audio track id (returned by)
@@ -1684,11 +1712,11 @@ declare class Hls {
     /**
      * position of live sync point (ie edge of live position minus safety delay defined by hls.config.liveSyncDuration)
      */
-    liveSyncPosition: number;
+    readonly liveSyncPosition: number;
     /**
      * get : array of subtitle tracks exposed in manifest
      */
-    subtitleTracks: any[];
+    readonly subtitleTracks: any[];
     /**
      * get/set : subtitle track id (returned by).
      * Returns -1 if no track is visible.
@@ -1718,7 +1746,7 @@ declare class Hls {
     /**
      * tell whether auto level selection is enabled or not
      */
-    autoLevelEnabled(enabled: boolean): boolean;
+    readonly autoLevelEnabled: boolean;
     /**
      * loads provided url as media source
      */
